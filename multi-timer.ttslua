@@ -1,33 +1,28 @@
 -- MultiTimer - chessclock-like timer for two or more players
 
 version = '0.9.0'
+isActive = false
 timersList = {}
 timerTemplate = {
-    isActive = false,
     currentSeconds = 0,
     lastSeconds = 0,
 }
 currentTimerIndex = 0
-globalTimer = nil
 
 function onLoad(save_state)
-    globalTimer = clone(timerTemplate)
+    addTimer()
     self.setName('MultiTimer')
     self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' .. version .. '.')
     createButtons()
 end
 
 function onUpdate()
-    updateTimerSeconds(globalTimer)
     updateTimerSeconds(timersList[currentTimerIndex])
     updateView()
 end
 
 function updateTimerSeconds(timer)
-    if timer == nil then
-        return
-    end
-    if timer.isActive then
+    if isActive then
         local currentSecondsValue = os.clock()
         if timer.lastSeconds == 0 then
             timer.lastSeconds = currentSecondsValue
@@ -39,11 +34,7 @@ function updateTimerSeconds(timer)
 end
 
 function updateView()
-    local timer = timersList[currentTimerIndex]
-    local seconds = 0
-    if timer != nil then
-        seconds = timer.currentSeconds
-    end
+    local seconds = timersList[currentTimerIndex].currentSeconds
     local timerString = formatSeconds(seconds)
     local firstButtonIndex = 6
     local prevString = self.getButtons()[firstButtonIndex].label
@@ -62,69 +53,24 @@ function formatSeconds(seconds)
     return string.format("%02d:%02d:%02d", hours, minutes, seconds)
 end
 
-function startTimers()
-    local started = false
-    if startTimer(globalTimer) then
-        started = true
-    end
-    if startTimer(timersList[currentTimerIndex]) then
-        started = true
-    end
-
-    if started then
+function startTimer()
+    if isActive == false then
+        timersList[currentTimerIndex].lastSeconds = os.clock()
+        isActive = true
         updateView()
         print('Timer started')
     end
 end
 
-function startTimer(timer)
-    if timer == nil then
-        return false
-    end
-    if timer.isActive then
-        return false
-    end
-    timer.lastSeconds = os.clock()
-    timer.isActive = true
-    return true
-end
-
-function pauseTimers(noLog)
-    if noLog ~= true then
-        noLog = false
-    end
-
-    local paused = false
-    if pauseTimer(globalTimer) then
-        paused = true
-    end
-    for index, timer in pairs(timersList) do
-        if pauseTimer(timer) then
-            pause = true
-        end
-    end
-
-    if paused then
+function pauseTimer()
+    if isActive == true then
+        isActive = false
         updateView()
-        if noLog == false then
-            print('Timers paused')
-        end
+        print('Timers paused')
     end
-end
-
-function pauseTimer(timer)
-    if timer == nil then
-        return false
-    end
-    if timer.isActive == false then
-        return false
-    end
-    timer.isActive = false
-    return true
 end
 
 function resetTimers()
-    resetTimer(globalTimer)
     for index, timer in pairs(timersList) do
         resetTimer(timer)
     end
@@ -134,36 +80,20 @@ function resetTimers()
 end
 
 function resetTimer(timer)
-    if timer == nil then
-        return
-    end
     timer.currentSeconds = 0
 end
 
-function nextTimer(hideErrors)
-    if hideErrors ~= true then
-        hideErrors = false
-    end
+function nextTimer()
+    currentTimerIndex = currentTimerIndex + 1
     local length = length(timersList)
-    if length > 0 then
-        local active = globalTimer.isActive
-        pauseTimers(true)
-        currentTimerIndex = currentTimerIndex + 1
-        if currentTimerIndex > length or currentTimerIndex < 1 then
-            currentTimerIndex = 1
-        end
-        if active then
-            startTimer(globalTimer)
-            startTimer(timersList[currentTimerIndex])
-        end
-        updateView()
-        print('Current player: ' .. currentTimerIndex)
-    else
-        currentTimerIndex = 0
-        if hideErrors == false then
-            print('Can\'t change player: players count must be more than one')
-        end
+    if currentTimerIndex > length or currentTimerIndex < 1 then
+        currentTimerIndex = 1
     end
+    if isActive then
+        timersList[currentTimerIndex].lastSeconds = os.clock()
+    end
+    updateView()
+    print('Current player: ' .. currentTimerIndex .. ' from ' .. length)
 end
 
 function addTimer()
@@ -172,13 +102,12 @@ function addTimer()
     timersList[nextIndex] = newTimer
     if (nextIndex == 1) then
         currentTimerIndex = 1
-        newTimer.isActive = globalTimer.isActive
     end
     print('Player added. Players count: ' .. nextIndex)
 end
 
 function removeTimer()
-    if length(timersList) > 0 then
+    if length(timersList) > 1 then
         local newTimersList = {}
         local nextIndex = 0
         for index, timer in pairs(timersList) do
@@ -188,11 +117,11 @@ function removeTimer()
             end
         end
         timersList = newTimersList
-        print('Player removed. Players count: ' .. nextIndex)
+        print('Player timer removed. Players count: ' .. nextIndex)
         currentTimerIndex = currentTimerIndex - 1
-        nextTimer(true)
+        nextTimer()
     else
-        print('Can\'t remove player: players count must be one or more')
+        print('Removing of last player timer is deprecated')
     end
 end
 
@@ -221,7 +150,7 @@ end
 
 function createButtons()
     self.createButton({
-        click_function = 'startTimers',
+        click_function = 'startTimer',
         function_owner = self,
         label          = 'Start',
         position       = {0.3, 0.5, 0.3},
@@ -232,10 +161,10 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Start timer',
+        tooltip        = 'Start current timer',
     })
     self.createButton({
-        click_function = 'pauseTimers',
+        click_function = 'pauseTimer',
         function_owner = self,
         label          = 'Pause',
         position       = {0.3, 0.5, 0},
@@ -246,7 +175,7 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Pause timer',
+        tooltip        = 'Pause current timer',
     })
     self.createButton({
         click_function = 'resetTimers',
@@ -260,7 +189,7 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Reset timer',
+        tooltip        = 'Reset all timers',
     })
     self.createButton({
         click_function = 'addTimer',
@@ -274,7 +203,7 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Add player',
+        tooltip        = 'Add player timer',
     })
     self.createButton({
         click_function = 'removeTimer',
@@ -288,7 +217,7 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Remove Player',
+        tooltip        = 'Remove timer of current player',
     })
 
     -- player buttons
