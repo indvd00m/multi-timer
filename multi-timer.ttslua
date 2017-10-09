@@ -1,4 +1,6 @@
+-- MultiTimer - chessclock-like timer for two or more players
 
+version = '0.9.0'
 timersList = {}
 timerTemplate = {
     isActive = false,
@@ -10,6 +12,8 @@ globalTimer = nil
 
 function onLoad(save_state)
     globalTimer = clone(timerTemplate)
+    self.setName('MultiTimer')
+    self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' .. version .. '.')
     createButtons()
 end
 
