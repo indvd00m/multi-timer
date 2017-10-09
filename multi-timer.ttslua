@@ -15,6 +15,7 @@ function onLoad(save_state)
     addTimer()
     self.setName('MultiTimer')
     self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' .. version .. '.')
+    self.setColorTint({102/255, 102/255, 255/255})
     createButtons()
 end
 
