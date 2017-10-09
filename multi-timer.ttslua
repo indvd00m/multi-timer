@@ -2,6 +2,8 @@
 
 version = '0.9.0'
 isActive = false
+timerLimit = 60 * 30
+timerIncrement = 30
 timersList = {}
 timerTemplate = {
     currentSeconds = 0,
@@ -34,9 +36,12 @@ function updateTimerSeconds(timer)
 end
 
 function updateView()
-    local seconds = timersList[currentTimerIndex].currentSeconds
+    local seconds = timerLimit - timersList[currentTimerIndex].currentSeconds
+    if seconds <= 0 then
+        seconds = 0
+    end
     local timerString = formatSeconds(seconds)
-    local firstButtonIndex = 6
+    local firstButtonIndex = 8
     local prevString = self.getButtons()[firstButtonIndex].label
     if timerString ~= prevString then
         self.editButton({
@@ -122,6 +127,20 @@ function removeTimer()
         nextTimer()
     else
         print('Removing of last player timer is deprecated')
+    end
+end
+
+function increaseTime()
+    timerLimit = timerLimit + timerIncrement
+    print('All timers increased at ' .. formatSeconds(timerIncrement))
+end
+
+function decreaseTime()
+    if timerLimit > timerIncrement then
+        timerLimit = timerLimit - timerIncrement
+        print('All timers decreased at ' .. formatSeconds(timerIncrement))
+    else
+        print('Timers already decreased until the end ')
     end
 end
 
@@ -218,6 +237,34 @@ function createButtons()
         -- color          = -- Color,
         -- font_color     = -- Color,
         tooltip        = 'Remove timer of current player',
+    })
+    self.createButton({
+        click_function = 'increaseTime',
+        function_owner = self,
+        label          = '+',
+        position       = {-0.3, 0.5, 0.3},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Increase all timers at ' .. timerIncrement .. ' seconds',
+    })
+    self.createButton({
+        click_function = 'decreaseTime',
+        function_owner = self,
+        label          = '-',
+        position       = {-0.3, 0.5, 0},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Decrease all timers at ' .. timerIncrement .. ' seconds',
     })
 
     -- player buttons
