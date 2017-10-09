@@ -40,14 +40,16 @@ function updateView()
     if seconds <= 0 then
         seconds = 0
     end
-    local timerString = formatSeconds(seconds)
+    local timerString = 'Player ' .. currentTimerIndex .. '\n' .. formatSeconds(seconds)
     local firstButtonIndex = 8
     local prevString = self.getButtons()[firstButtonIndex].label
     if timerString ~= prevString then
-        self.editButton({
-            index          = firstButtonIndex - 1,
-            label          = timerString
-        })
+        for i = 0, 3 do
+            self.editButton({
+                index          = firstButtonIndex + i - 1,
+                label          = timerString
+            })
+        end
     end
 end
 
@@ -274,9 +276,54 @@ function createButtons()
         label          = '00:00:00',
         position       = {0, 0, -0.5},
         rotation       = {90, 180, 0},
-        width          = 500,
-        height         = 100,
+        -- scale          = -- Vector,
+        width          = 450,
+        height         = 300,
         font_size      = 100,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Next player',
+    })
+    self.createButton({
+        click_function = 'nextTimer',
+        function_owner = self,
+        label          = '00:00:00',
+        position       = {0, 0, 0.5},
+        rotation       = {-90, 0, 0},
+        -- scale          = -- Vector,
+        width          = 450,
+        height         = 300,
+        font_size      = 100,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Next player',
+    })
+    self.createButton({
+        click_function = 'nextTimer',
+        function_owner = self,
+        label          = '00:00:00',
+        position       = {-0.5, 0, 0},
+        rotation       = {0, 90, -90},
+        -- scale          = -- Vector,
+        width          = 450,
+        height         = 300,
+        font_size      = 100,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Next player',
+    })
+    self.createButton({
+        click_function = 'nextTimer',
+        function_owner = self,
+        label          = '00:00:00',
+        position       = {0.5, 0, 0},
+        rotation       = {0, -90, 90},
+        -- scale          = -- Vector,
+        width          = 450,
+        height         = 300,
+        font_size      = 100,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
         tooltip        = 'Next player',
     })
 end
