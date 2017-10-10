@@ -1,6 +1,6 @@
 -- MultiTimer - chessclock-like timer for two or more players
 
-version = '0.9.5'
+version = '1.0.0'
 url = 'https://github.com/indvd00m/multi-timer'
 isActive = false
 timerLimit = 60 * 30
@@ -12,12 +12,45 @@ timerTemplate = {
 }
 currentTimerIndex = 0
 
-function onLoad(save_state)
-    addTimer()
+function onSave()
+    local persistence = {
+        isActive = isActive,
+        timerLimit = timerLimit,
+        timerIncrement = timerIncrement,
+        timersList = timersList,
+        timerTemplate = timerTemplate,
+        currentTimerIndex = currentTimerIndex,
+        clock = os.clock(),
+    }
+    local json = JSON.encode(persistence)
+    return json
+end
+
+function onLoad(savedState)
+    if savedState ~= nil and savedState ~= "" then
+        local persistence = JSON.decode(savedState)
+        isActive = persistence.isActive
+        timerLimit = persistence.timerLimit
+        timerIncrement = persistence.timerIncrement
+        timersList = persistence.timersList
+        timerTemplate = persistence.timerTemplate
+        currentTimerIndex = persistence.currentTimerIndex
+        local clockDiff = persistence.clock - os.clock()
+        for index, timer in pairs(timersList) do
+            timer.lastSeconds = timer.lastSeconds - clockDiff
+            if timer.lastSeconds < 0 then
+                timer.lastSeconds = 0
+            end
+        end
+    else
+        addTimer()
+    end
+
+    createButtons()
+
     self.setName('MultiTimer')
     self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' .. version .. '. \n\n' .. url)
     self.setColorTint({102/255, 102/255, 255/255})
-    createButtons()
 end
 
 function onUpdate()
