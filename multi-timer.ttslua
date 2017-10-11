@@ -1,6 +1,6 @@
 -- MultiTimer - chessclock-like timer for two or more players
 
-version = '1.0.0'
+version = '1.1.0'
 url = 'https://github.com/indvd00m/multi-timer'
 isActive = false
 timerLimit = 60 * 30
@@ -72,11 +72,13 @@ end
 
 function updateView()
     local seconds = timerLimit - timersList[currentTimerIndex].currentSeconds
-    if seconds <= 0 then
-        seconds = 0
+    local sign = ''
+    if seconds < 0 then
+        seconds = math.abs(seconds)
+        sign = '-'
     end
-    local timerString = 'Player ' .. currentTimerIndex .. '\n' .. formatSeconds(seconds)
-    local firstButtonIndex = 8
+    local timerString = 'Player ' .. currentTimerIndex .. '\n' .. sign .. formatSeconds(seconds)
+    local firstButtonIndex = 10
     local prevString = self.getButtons()[firstButtonIndex].label
     if timerString ~= prevString then
         for i = 0, 3 do
@@ -181,6 +183,28 @@ function decreaseTime()
     end
 end
 
+function increaseCurrentTime()
+    local timer = timersList[currentTimerIndex]
+    if timer.currentSeconds > timerIncrement then
+        timer.currentSeconds = timer.currentSeconds - timerIncrement
+        print('Timer of player ' .. currentTimerIndex .. ' increased at ' .. formatSeconds(timerIncrement))
+    else
+        timer.currentSeconds = 0
+        print('Timer of player ' .. currentTimerIndex .. ' already increased to maximum')
+    end
+end
+
+function decreaseCurrentTime()
+    local timer = timersList[currentTimerIndex]
+    -- if timer.currentSeconds + timerIncrement < timerLimit then
+        timer.currentSeconds = timer.currentSeconds + timerIncrement
+        print('Timer of player ' .. currentTimerIndex .. ' decreased at ' .. formatSeconds(timerIncrement))
+    -- else
+    --     timer.currentSeconds = timerLimit
+    --     print('Timer of player ' .. currentTimerIndex .. ' already decreased to minimum')
+    -- end
+end
+
 function length(table)
     local count = 0
     for _ in pairs(table) do
@@ -248,9 +272,9 @@ function createButtons()
         tooltip        = 'Reset all timers',
     })
     self.createButton({
-        click_function = 'addTimer',
+        click_function = 'decreaseTime',
         function_owner = self,
-        label          = 'Add',
+        label          = '--',
         position       = {0, 0.5, 0.3},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
@@ -259,26 +283,12 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Add player timer',
-    })
-    self.createButton({
-        click_function = 'removeTimer',
-        function_owner = self,
-        label          = 'Remove',
-        position       = {0, 0.5, 0},
-        rotation       = {0, 180, 0},
-        -- scale          = -- Vector,
-        width          = 150,
-        height         = 100,
-        font_size      = 40,
-        -- color          = -- Color,
-        -- font_color     = -- Color,
-        tooltip        = 'Remove timer of current player',
+        tooltip        = 'Decrease all timers at ' .. timerIncrement .. ' seconds',
     })
     self.createButton({
         click_function = 'increaseTime',
         function_owner = self,
-        label          = '+',
+        label          = '++',
         position       = {-0.3, 0.5, 0.3},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
@@ -290,9 +300,23 @@ function createButtons()
         tooltip        = 'Increase all timers at ' .. timerIncrement .. ' seconds',
     })
     self.createButton({
-        click_function = 'decreaseTime',
+        click_function = 'decreaseCurrentTime',
         function_owner = self,
         label          = '-',
+        position       = {0, 0.5, 0},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Decrease current timer at ' .. timerIncrement .. ' seconds',
+    })
+    self.createButton({
+        click_function = 'increaseCurrentTime',
+        function_owner = self,
+        label          = '+',
         position       = {-0.3, 0.5, 0},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
@@ -301,7 +325,35 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Decrease all timers at ' .. timerIncrement .. ' seconds',
+        tooltip        = 'Increase current timer at ' .. timerIncrement .. ' seconds',
+    })
+    self.createButton({
+        click_function = 'removeTimer',
+        function_owner = self,
+        label          = 'Remove',
+        position       = {0, 0.5, -0.3},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Remove current timer',
+    })
+    self.createButton({
+        click_function = 'addTimer',
+        function_owner = self,
+        label          = 'Add',
+        position       = {-0.3, 0.5, -0.3},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        -- color          = -- Color,
+        -- font_color     = -- Color,
+        tooltip        = 'Add new timer',
     })
 
     -- player buttons
