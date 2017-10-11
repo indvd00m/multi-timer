@@ -169,12 +169,12 @@ function removeTimer()
     end
 end
 
-function increaseTime()
+function increaseLimit()
     timerLimit = timerLimit + timerIncrement
     print('All timers increased at ' .. formatSeconds(timerIncrement))
 end
 
-function decreaseTime()
+function decreaseLimit()
     if timerLimit > timerIncrement then
         timerLimit = timerLimit - timerIncrement
         print('All timers decreased at ' .. formatSeconds(timerIncrement))
@@ -272,7 +272,7 @@ function createButtons()
         tooltip        = 'Reset all timers',
     })
     self.createButton({
-        click_function = 'decreaseTime',
+        click_function = 'decreaseLimit',
         function_owner = self,
         label          = '--',
         position       = {0, 0.5, 0.3},
@@ -283,10 +283,10 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Decrease all timers at ' .. timerIncrement .. ' seconds',
+        tooltip        = 'Decrease upper limit of all timers at ' .. timerIncrement .. ' seconds',
     })
     self.createButton({
-        click_function = 'increaseTime',
+        click_function = 'increaseLimit',
         function_owner = self,
         label          = '++',
         position       = {-0.3, 0.5, 0.3},
@@ -297,7 +297,7 @@ function createButtons()
         font_size      = 40,
         -- color          = -- Color,
         -- font_color     = -- Color,
-        tooltip        = 'Increase all timers at ' .. timerIncrement .. ' seconds',
+        tooltip        = 'Increase upper limit of all timers at ' .. timerIncrement .. ' seconds',
     })
     self.createButton({
         click_function = 'decreaseCurrentTime',
