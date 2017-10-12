@@ -1,7 +1,7 @@
 -- MultiTimer - chessclock-like timer for two or more players
 
 -- constants
-version = '1.2.0'
+version = '1.2.1'
 url = 'https://github.com/indvd00m/multi-timer'
 mainColor = {102/255, 102/255, 255/255}
 enabledColor = {0/255, 204/255, 102/255}
@@ -162,6 +162,12 @@ function formatSeconds(seconds)
     return string.format("%02d:%02d:%02d", hours, minutes, seconds)
 end
 
+function showText(text)
+    if isTurns then
+        broadcastToAll(text, mainColor)
+    end
+end
+
 function toggleTimer()
     if isActive then
         pauseTimer()
@@ -177,6 +183,7 @@ function startTimer()
         updateView()
         updateActiveView()
         print('Timer started')
+        showText('Timer started')
     end
 end
 
@@ -186,6 +193,7 @@ function pauseTimer()
         updateView()
         updateActiveView()
         print('Timers paused')
+        showText('Timers paused')
     end
 end
 
@@ -218,12 +226,19 @@ function enableTurns()
         isTurns = true
         updateTurnsView()
         updateCurrentTurnView()
-        print('Turns enabled')
+        print('\z
+            Turns and colors binding enabled. For binding color to timer first select timer, \z
+            then change player color. Current timer will be binded to player which selected color. \z
+            Now timer will be automatically changed when turn is changed. You can change \z
+            current timer manually also. \z
+        ')
+        showText('Turns and Colors enabled. See chat for more information.')
     end
 end
 
 function disableTurns()
     if isTurns == true then
+        showText('Turns disabled')
         isTurns = false
         updateTurnsView()
         updateCurrentTurnView()
@@ -251,7 +266,8 @@ function resetTimers()
     end
 
     updateView()
-    print('Timer reseted')
+    print('All timers reseted')
+    showText('All timers reseted')
 end
 
 function resetTimer(timer)
@@ -279,7 +295,9 @@ function setCurrentTimer(index)
     end
     updateView()
     updateCurrentTurnView()
-    print('Current timer: ' .. getPlayerName(currentTimerIndex) .. ' (' .. currentTimerIndex .. ' from ' .. length .. ')')
+    local playerName = getPlayerName(currentTimerIndex)
+    print('Current timer: ' .. playerName .. ' (' .. currentTimerIndex .. ' from ' .. length .. ')')
+    showText('Current timer: ' .. playerName)
 end
 
 function addTimer()
@@ -287,6 +305,7 @@ function addTimer()
     local newTimer = clone(timerTemplate);
     timersList[nextIndex] = newTimer
     print('Timer added. Timers count: ' .. nextIndex)
+    showText('Timer added. Timers count: ' .. nextIndex)
     setCurrentTimer(nextIndex)
 end
 
@@ -303,6 +322,7 @@ function removeTimer()
         end
         timersList = newTimersList
         print('Timer removed. Timers count: ' .. nextIndex)
+        showText('Timer removed. Timers count: ' .. nextIndex)
         if currentTimerIndex == length then
             currentTimerIndex = currentTimerIndex - 2
         else
@@ -311,6 +331,7 @@ function removeTimer()
         nextTimer()
     else
         print('Removing of last timer is deprecated')
+        showText('Removing of last timer is deprecated')
     end
 end
 
@@ -395,16 +416,21 @@ function onPlayerChangeColor(color)
         if index ~= currentTimerIndex then
             if timer.color == color then
                 timer.color = undefinedTimerColorValue
-                print(getPlayerName(index) .. ': current color reseted')
+                local playerName = getPlayerName(index)
+                print(playerName .. ': current color reseted')
+                showText(playerName .. ': current color reseted')
             end
         end
     end
     timersList[currentTimerIndex].color = color
     updateCurrentTurnView()
-    print(getPlayerName(currentTimerIndex) .. ': current color binded')
+    local playerName = getPlayerName(currentTimerIndex)
+    print(playerName .. ': current color binded')
+    showText(playerName .. ': current color binded')
 end
 
 function onPlayerTurnEnd(colorEnd, colorNext)
+    print('onPlayerTurnEnd')
     if isTurns == false then
         return
     end
@@ -438,11 +464,14 @@ function onPlayerTurnEnd(colorEnd, colorNext)
 
     if needStop then
         pauseTimer()
-        print(getPlayerName(currentTimerIndex) .. ': current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
+        local playerName = getPlayerName(currentTimerIndex)
+        print(playerName .. ': current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
+        showText(playerName .. ': current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
     end
 end
 
 function onPlayerTurnStart(startColor, prevColor)
+    print('onPlayerTurnStart')
     if isTurns == false then
         return
     end
@@ -462,17 +491,16 @@ function onPlayerTurnStart(startColor, prevColor)
     end
     local startIndex = nil
     for index, timer in pairs(timersList) do
-        if currentTimerIndex ~= index then
-            if timer.color == startColor then
-                startIndex = index
-                break
-            end
+        if timer.color == startColor then
+            startIndex = index
+            break
         end
     end
     if startIndex ~= nil then
         setCurrentTimer(startIndex)
     else
         print('Can\'t find timer with color ' .. startColor)
+        showText('Can\'t find timer with color ' .. startColor)
     end
 end
 
@@ -526,7 +554,7 @@ function createButtons()
         font_size      = 40,
         color          = defaultButtonColor,
         -- font_color     = -- Color,
-        tooltip        = 'Enable or disable auto-binding to Turns',
+        tooltip        = 'Enable or disable auto-binding to Turns and Colors',
     })
     self.createButton({
         click_function = 'resetTimers',
