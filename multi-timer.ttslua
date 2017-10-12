@@ -1,7 +1,7 @@
 -- MultiTimer - chessclock-like timer for two or more players
 
 -- constants
-version = '1.2.1'
+version = '1.2.2'
 url = 'https://github.com/indvd00m/multi-timer'
 mainColor = {102/255, 102/255, 255/255}
 enabledColor = {0/255, 204/255, 102/255}
@@ -430,7 +430,6 @@ function onPlayerChangeColor(color)
 end
 
 function onPlayerTurnEnd(colorEnd, colorNext)
-    print('onPlayerTurnEnd')
     if isTurns == false then
         return
     end
@@ -471,7 +470,6 @@ function onPlayerTurnEnd(colorEnd, colorNext)
 end
 
 function onPlayerTurnStart(startColor, prevColor)
-    print('onPlayerTurnStart')
     if isTurns == false then
         return
     end
