@@ -1,4 +1,6 @@
-# MultiTimer
+# MultiTimer 
+
+Timer for Tabletop Simulator.
 
 MultiTimer is a chessclock-like timer for one, two or more players. MutliTimer optionally support Colors and Turns for auto change of current timer.
 
