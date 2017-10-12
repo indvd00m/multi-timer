@@ -23,6 +23,7 @@ turnsColors = {
     Grey        = {0.5, 0.5, 0.5},
     Black       = {0.25, 0.25, 0.25}
 }
+maxPlayerNameLength = 9
 
 -- variables
 isActive = false
@@ -96,6 +97,9 @@ function updateForBackwardCompatibility()
             timer['color'] = undefinedTimerColorValue
         end
     end
+    if timerTemplate['color'] == nil then
+        timerTemplate['color'] = undefinedTimerColorValue
+    end
 end
 
 function onUpdate()
@@ -122,7 +126,11 @@ function updateView()
         seconds = math.abs(seconds)
         sign = '-'
     end
-    local timerString = 'Player ' .. currentTimerIndex .. '\n' .. sign .. formatSeconds(seconds)
+    local playerName = getPlayerName(currentTimerIndex)
+    if string.len(playerName) > maxPlayerNameLength then
+        playerName = string.sub(playerName, 1, maxPlayerNameLength)
+    end
+    local timerString = playerName .. '\n' .. sign .. formatSeconds(seconds)
     local prevString = self.getButtons()[firstCurrentTimerButtonIndex].label
     if timerString ~= prevString then
         for i = 0, 3 do
@@ -132,6 +140,19 @@ function updateView()
             })
         end
     end
+end
+
+function getPlayerName(timerIndex)
+    if isTurns then
+        local color = timersList[timerIndex].color
+        if color ~= undefinedTimerColorValue then
+            local player = Player[color]
+            if player ~= nil and player.steam_name ~= nil then
+                return player.steam_name
+            end
+        end
+    end
+    return 'Player ' .. timerIndex
 end
 
 function formatSeconds(seconds)
@@ -258,14 +279,14 @@ function setCurrentTimer(index)
     end
     updateView()
     updateCurrentTurnView()
-    print('Current player: ' .. currentTimerIndex .. ' from ' .. length)
+    print('Current timer: ' .. getPlayerName(currentTimerIndex) .. ' (' .. currentTimerIndex .. ' from ' .. length .. ')')
 end
 
 function addTimer()
     local nextIndex = length(timersList) + 1
     local newTimer = clone(timerTemplate);
     timersList[nextIndex] = newTimer
-    print('Player added. Players count: ' .. nextIndex)
+    print('Timer added. Timers count: ' .. nextIndex)
     setCurrentTimer(nextIndex)
 end
 
@@ -281,7 +302,7 @@ function removeTimer()
             end
         end
         timersList = newTimersList
-        print('Player timer removed. Players count: ' .. nextIndex)
+        print('Timer removed. Timers count: ' .. nextIndex)
         if currentTimerIndex == length then
             currentTimerIndex = currentTimerIndex - 2
         else
@@ -289,7 +310,7 @@ function removeTimer()
         end
         nextTimer()
     else
-        print('Removing of last player timer is deprecated')
+        print('Removing of last timer is deprecated')
     end
 end
 
@@ -309,24 +330,21 @@ end
 
 function increaseCurrentTime()
     local timer = timersList[currentTimerIndex]
+    local playerName = getPlayerName(currentTimerIndex)
     if timer.currentSeconds > timerIncrement then
         timer.currentSeconds = timer.currentSeconds - timerIncrement
-        print('Timer of player ' .. currentTimerIndex .. ' increased at ' .. formatSeconds(timerIncrement))
+        print('Timer of ' .. playerName .. ' increased at ' .. formatSeconds(timerIncrement))
     else
         timer.currentSeconds = 0
-        print('Timer of player ' .. currentTimerIndex .. ' already increased to maximum')
+        print('Timer of ' .. playerName .. ' already increased to maximum')
     end
 end
 
 function decreaseCurrentTime()
     local timer = timersList[currentTimerIndex]
-    -- if timer.currentSeconds + timerIncrement < timerLimit then
-        timer.currentSeconds = timer.currentSeconds + timerIncrement
-        print('Timer of player ' .. currentTimerIndex .. ' decreased at ' .. formatSeconds(timerIncrement))
-    -- else
-    --     timer.currentSeconds = timerLimit
-    --     print('Timer of player ' .. currentTimerIndex .. ' already decreased to minimum')
-    -- end
+    local playerName = getPlayerName(currentTimerIndex)
+    timer.currentSeconds = timer.currentSeconds + timerIncrement
+    print('Timer of ' .. playerName .. ' decreased at ' .. formatSeconds(timerIncrement))
 end
 
 function updateCurrentTurnView()
@@ -377,13 +395,13 @@ function onPlayerChangeColor(color)
         if index ~= currentTimerIndex then
             if timer.color == color then
                 timer.color = undefinedTimerColorValue
-                print('Player ' .. index .. ': current color reseted')
+                print(getPlayerName(index) .. ': current color reseted')
             end
         end
     end
     timersList[currentTimerIndex].color = color
     updateCurrentTurnView()
-    print('Player ' .. currentTimerIndex .. ': current color binded')
+    print(getPlayerName(currentTimerIndex) .. ': current color binded')
 end
 
 function onPlayerTurnEnd(colorEnd, colorNext)
@@ -420,7 +438,7 @@ function onPlayerTurnEnd(colorEnd, colorNext)
 
     if needStop then
         pauseTimer()
-        print('Current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
+        print(getPlayerName(currentTimerIndex) .. ': current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
     end
 end
 
@@ -622,7 +640,7 @@ function createButtons()
         font_size      = 100,
         color          = defaultButtonColor,
         -- font_color     = -- Color,
-        tooltip        = 'Next player',
+        tooltip        = 'Next timer',
     })
     self.createButton({
         click_function = 'nextTimer',
@@ -636,7 +654,7 @@ function createButtons()
         font_size      = 100,
         color          = defaultButtonColor,
         -- font_color     = -- Color,
-        tooltip        = 'Next player',
+        tooltip        = 'Next timer',
     })
     self.createButton({
         click_function = 'nextTimer',
@@ -650,7 +668,7 @@ function createButtons()
         font_size      = 100,
         color          = defaultButtonColor,
         -- font_color     = -- Color,
-        tooltip        = 'Next player',
+        tooltip        = 'Next timer',
     })
     self.createButton({
         click_function = 'nextTimer',
@@ -664,6 +682,6 @@ function createButtons()
         font_size      = 100,
         color          = defaultButtonColor,
         -- font_color     = -- Color,
-        tooltip        = 'Next player',
+        tooltip        = 'Next timer',
     })
 end
