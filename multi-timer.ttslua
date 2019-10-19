@@ -320,7 +320,7 @@ function removeTimer()
         local newTimersList = {}
         local nextIndex = 0
         for index, timer in pairs(timersList) do
-            if index != currentTimerIndex then
+            if index ~= currentTimerIndex then
                 nextIndex = nextIndex + 1
                 newTimersList[nextIndex] = timer
             end
