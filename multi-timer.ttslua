@@ -125,7 +125,7 @@ function updateTimerSeconds(timer)
 end
 
 function updateView()
-    local seconds = timerLimit - timersList[currentTimerIndex].currentSeconds
+    local seconds = getTimerSecondsHumanReadeable(timersList[currentTimerIndex])
     local sign = ''
     if seconds < 0 then
         seconds = math.abs(seconds)
@@ -145,6 +145,11 @@ function updateView()
             })
         end
     end
+end
+
+function getTimerSecondsHumanReadeable(timer)
+    local seconds = timerLimit - timer.currentSeconds
+    return seconds;
 end
 
 function getPlayerName(timerIndex)
@@ -267,6 +272,9 @@ end
 
 function resetTimers()
     for index, timer in pairs(timersList) do
+        local playerName = getPlayerName(index)
+        local seconds = getTimerSecondsHumanReadeable(timer)
+        print(playerName .. ': Timer value before reseting: ' .. formatSeconds(seconds))
         resetTimer(timer)
     end
 
