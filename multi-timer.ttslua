@@ -29,7 +29,7 @@ maxPlayerNameLength = 9
 isActive = false
 isTurns = false
 timerLimit = 60 * 30
-timerIncrement = 30
+timerIncrement = 60
 timersList = {}
 timerTemplate = {
     currentSeconds = 0,
@@ -99,6 +99,11 @@ function updateForBackwardCompatibility()
     end
     if timerTemplate['color'] == nil then
         timerTemplate['color'] = undefinedTimerColorValue
+    end
+
+    -- 1.3.0-dev changes
+    if timerIncrement == 30 then
+        timerIncrement = 60
     end
 end
 
