@@ -8,7 +8,12 @@ enabledColor = {0/255, 204/255, 102/255}
 disabledColor = {153/255, 153/255, 153/255}
 defaultButtonColor = {255/255, 255/255, 255/255}
 undefinedTimerColorValue = ''
-firstCurrentTimerButtonIndex = 10
+startButtonIndex = 0
+turnsButtonIndex = 5
+selectTimerColorButtonIndex = 7
+bindTimerToColorButtonIndex = 8
+resetTimersButtonIndex = 9
+firstCurrentTimerButtonIndex = 12
 turnsColors = {
     White       = {1, 1, 1},
     Brown       = {0.443, 0.231, 0.09},
@@ -37,6 +42,7 @@ timerTemplate = {
     color = undefinedTimerColorValue,
 }
 currentTimerIndex = 0
+selectedTimerColor = nil
 
 -- code
 function onSave()
@@ -48,6 +54,7 @@ function onSave()
         timersList = timersList,
         timerTemplate = timerTemplate,
         currentTimerIndex = currentTimerIndex,
+        selectedTimerColor = selectedTimerColor,
         clock = os.clock(),
     }
     local json = JSON.encode(persistence)
@@ -64,6 +71,7 @@ function onLoad(savedState)
         timersList = persistence.timersList
         timerTemplate = persistence.timerTemplate
         currentTimerIndex = persistence.currentTimerIndex
+        selectedTimerColor = persistence.selectedTimerColor
         local clockDiff = persistence.clock - os.clock()
         for index, timer in pairs(timersList) do
             timer.lastSeconds = timer.lastSeconds - clockDiff
@@ -81,6 +89,7 @@ function onLoad(savedState)
     updateActiveView()
     updateTurnsView()
     updateCurrentTurnView()
+    updateSelectTimerColorView()
 
     self.setName('MultiTimer')
     self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' .. version .. '. \n\n' .. url)
@@ -131,7 +140,7 @@ function updateView()
         seconds = math.abs(seconds)
         sign = '-'
     end
-    local playerName = getPlayerName(currentTimerIndex)
+    local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     if string.len(playerName) > maxPlayerNameLength then
         playerName = string.sub(playerName, 1, maxPlayerNameLength)
     end
@@ -152,17 +161,26 @@ function getTimerSecondsHumanReadeable(timer)
     return seconds;
 end
 
-function getPlayerName(timerIndex)
+function getPlayerNameByTimerIndex(timerIndex)
     if isTurns then
         local color = timersList[timerIndex].color
         if color ~= undefinedTimerColorValue then
-            local player = Player[color]
-            if player ~= nil and player.steam_name ~= nil then
-                return player.steam_name
+            local playerName = getPlayerNameByColor(color)
+            if playerName ~= nil then
+                return playerName
             end
         end
     end
     return 'Player ' .. timerIndex
+end
+
+function getPlayerNameByColor(color)
+    local player = Player[color]
+    if player ~= nil and player.steam_name ~= nil then
+        return player.steam_name
+    else
+        return nil
+    end
 end
 
 function formatSeconds(seconds)
@@ -210,13 +228,13 @@ end
 function updateActiveView()
     if isActive then
         self.editButton({
-            index          = 0,
+            index          = startButtonIndex,
             label          = 'Pause',
             color          = enabledColor,
         })
     else
         self.editButton({
-            index          = 0,
+            index          = startButtonIndex,
             label          = 'Start',
             color          = disabledColor,
         })
@@ -236,11 +254,12 @@ function enableTurns()
         isTurns = true
         updateTurnsView()
         updateCurrentTurnView()
+        updateSelectTimerColorView()
         print('\z
-            Turns and colors binding enabled. For binding color to timer first select timer, \z
-            then change player color. Current timer will be binded to player which selected color. \z
-            Now timer will be automatically changed when turn is changed. You can change \z
-            current timer manually also. \z
+            Turns and colors binding enabled. For binding timer to any player first select timer, \z
+            then repeatedly press button Select to select player and then press button Bind to bind \z
+            current timer to selected player. Now timer will be automatically changed when turn is \z
+            changed. You can change current timer manually also. \z
         ')
         showText('Turns and Colors enabled. See chat for more information.')
     end
@@ -250,8 +269,10 @@ function disableTurns()
     if isTurns == true then
         showText('Turns disabled')
         isTurns = false
+        selectedTimerColor = nil
         updateTurnsView()
         updateCurrentTurnView()
+        updateSelectTimerColorView()
         print('Turns disabled')
     end
 end
@@ -259,12 +280,12 @@ end
 function updateTurnsView()
     if isTurns then
         self.editButton({
-            index          = 1,
+            index          = turnsButtonIndex,
             color          = enabledColor,
         })
     else
         self.editButton({
-            index          = 1,
+            index          = turnsButtonIndex,
             color          = disabledColor,
         })
     end
@@ -272,15 +293,16 @@ end
 
 function resetTimers()
     for index, timer in pairs(timersList) do
-        local playerName = getPlayerName(index)
+        local playerName = getPlayerNameByTimerIndex(index)
         local seconds = getTimerSecondsHumanReadeable(timer)
         print(playerName .. ': Timer value before reseting: ' .. formatSeconds(seconds))
         resetTimer(timer)
     end
 
     updateView()
-    print('All timers reseted')
-    showText('All timers reseted')
+    local seconds = formatSeconds(timerLimit)
+    print('All timers reseted to ' .. seconds)
+    showText('All timers reseted to ' .. seconds)
 end
 
 function resetTimer(timer)
@@ -308,7 +330,8 @@ function setCurrentTimer(index)
     end
     updateView()
     updateCurrentTurnView()
-    local playerName = getPlayerName(currentTimerIndex)
+    updateSelectTimerColorView()
+    local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     print('Current timer: ' .. playerName .. ' (' .. currentTimerIndex .. ' from ' .. length .. ')')
     showText('Current timer: ' .. playerName)
 end
@@ -351,6 +374,7 @@ end
 function increaseLimit()
     timerLimit = timerLimit + timerIncrement
     print('All timers increased at ' .. formatSeconds(timerIncrement))
+    updateResetTimerView()
 end
 
 function decreaseLimit()
@@ -360,11 +384,20 @@ function decreaseLimit()
     else
         print('Timers already decreased until the end ')
     end
+    updateResetTimerView()
+end
+
+function updateResetTimerView()
+    local tooltip = 'Reset all timers to ' .. formatSeconds(timerLimit)
+    self.editButton({
+        index          = resetTimersButtonIndex - 1,
+        tooltip        = tooltip
+    })
 end
 
 function increaseCurrentTime()
     local timer = timersList[currentTimerIndex]
-    local playerName = getPlayerName(currentTimerIndex)
+    local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     if timer.currentSeconds > timerIncrement then
         timer.currentSeconds = timer.currentSeconds - timerIncrement
         print('Timer of ' .. playerName .. ' increased at ' .. formatSeconds(timerIncrement))
@@ -376,9 +409,143 @@ end
 
 function decreaseCurrentTime()
     local timer = timersList[currentTimerIndex]
-    local playerName = getPlayerName(currentTimerIndex)
+    local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     timer.currentSeconds = timer.currentSeconds + timerIncrement
     print('Timer of ' .. playerName .. ' decreased at ' .. formatSeconds(timerIncrement))
+end
+
+function selectTimerColor()
+    if isTurns == false then
+        return
+    end
+
+    if color == nil then
+        -- unknown
+        return
+    elseif color == undefinedTimerColorValue then
+        -- undefined
+        return
+    elseif color == 'Grey' then
+        -- spectator
+        return
+    end
+
+    local nextSelectedColor = undefinedTimerColorValue
+    if selectedTimerColor ~= nil then
+        local colorsByIndex = {}
+        local indexByColor = {}
+        local lastColorIndex = 1
+        colorsByIndex[lastColorIndex] = undefinedTimerColorValue
+        indexByColor[undefinedTimerColorValue] = lastColorIndex
+        for index, player in pairs(Player.getPlayers()) do
+            if player.color ~= 'Grey' and player.color ~= 'Black' then
+                lastColorIndex = lastColorIndex + 1
+                colorsByIndex[lastColorIndex] = player.color
+                indexByColor[player.color] = lastColorIndex
+            end
+        end
+        -- TODO: sort colors according to turnsColors
+        local nextSelectedIndex = indexByColor[selectedTimerColor] + 1
+        if (nextSelectedIndex > lastColorIndex) then
+            nextSelectedIndex = 1
+        end
+        nextSelectedColor = colorsByIndex[nextSelectedIndex]
+    end
+
+    selectedTimerColor = nextSelectedColor
+
+    updateSelectTimerColorView()
+end
+
+function updateSelectTimerColorView()
+    if isTurns then
+        if selectedTimerColor == undefinedTimerColorValue then
+            self.editButton({
+                index          = selectTimerColorButtonIndex - 1,
+                color          = defaultButtonColor,
+                label          = '[None]'
+            })
+            self.editButton({
+                index          = bindTimerToColorButtonIndex - 1,
+                color          = enabledColor,
+                label          = 'Unbind'
+            })
+        elseif selectedTimerColor ~= nil then
+            local buttonColor = turnsColors[selectedTimerColor]
+            local playerName = getPlayerNameByColor(selectedTimerColor)
+            if string.len(playerName) > maxPlayerNameLength then
+                playerName = string.sub(playerName, 1, maxPlayerNameLength)
+            end
+            self.editButton({
+                index          = selectTimerColorButtonIndex - 1,
+                color          = buttonColor,
+                label          = playerName
+            })
+            self.editButton({
+                index          = bindTimerToColorButtonIndex - 1,
+                color          = enabledColor,
+                label          = 'Bind'
+            })
+        else
+            self.editButton({
+                index          = selectTimerColorButtonIndex - 1,
+                color          = defaultButtonColor,
+                label          = 'Select'
+            })
+            self.editButton({
+                index          = bindTimerToColorButtonIndex - 1,
+                color          = disabledColor,
+                label          = 'Bind'
+            })
+        end
+    else
+        self.editButton({
+            index          = selectTimerColorButtonIndex - 1,
+            color          = disabledColor,
+            label          = 'Select'
+        })
+        self.editButton({
+            index          = bindTimerToColorButtonIndex - 1,
+            color          = disabledColor,
+            label          = 'Bind'
+        })
+    end
+end
+
+function bindTimerToColor()
+    if isTurns == false then
+        return
+    end
+    if selectedTimerColor == nil then
+        return
+    end
+
+    if selectedTimerColor == undefinedTimerColorValue then
+        timersList[currentTimerIndex].color = undefinedTimerColorValue
+        local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
+        print(playerName .. ': timer unbinded')
+        showText(playerName .. ': timer unbinded')
+    else
+        for index, timer in pairs(timersList) do
+            if index ~= currentTimerIndex then
+                if timer.color == selectedTimerColor then
+                    timer.color = undefinedTimerColorValue
+                    local playerName = getPlayerNameByTimerIndex(index)
+                    print(playerName .. ': timer unbinded')
+                    showText(playerName .. ': timer unbinded')
+                end
+            end
+        end
+        timersList[currentTimerIndex].color = selectedTimerColor
+        local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
+        print(playerName .. ' (' .. selectedTimerColor .. '): timer ' .. currentTimerIndex .. ' binded ')
+        showText(playerName .. ' (' .. selectedTimerColor .. '): timer ' .. currentTimerIndex .. ' binded ')
+    end
+
+    selectedTimerColor = nil
+
+    updateCurrentTurnView()
+    updateSelectTimerColorView()
 end
 
 function updateCurrentTurnView()
@@ -405,41 +572,6 @@ function updateCurrentTurnView()
             })
         end
     end
-end
-
-function onPlayerChangeColor(color)
-    if isTurns == false then
-        return
-    end
-
-    if color == nil then
-        -- unknown
-        return
-    elseif color == undefinedTimerColorValue then
-        -- undefined
-        return
-    elseif color == 'Grey' then
-        -- spectator
-        return
-    elseif color == 'Black' then
-        -- master
-        return
-    end
-    for index, timer in pairs(timersList) do
-        if index ~= currentTimerIndex then
-            if timer.color == color then
-                timer.color = undefinedTimerColorValue
-                local playerName = getPlayerName(index)
-                print(playerName .. ': current color reseted')
-                showText(playerName .. ': current color reseted')
-            end
-        end
-    end
-    timersList[currentTimerIndex].color = color
-    updateCurrentTurnView()
-    local playerName = getPlayerName(currentTimerIndex)
-    print(playerName .. ': current color binded')
-    showText(playerName .. ': current color binded')
 end
 
 function onPlayerTurnEnd(colorEnd, colorNext)
@@ -476,9 +608,9 @@ function onPlayerTurnEnd(colorEnd, colorNext)
 
     if needStop then
         pauseTimer()
-        local playerName = getPlayerName(currentTimerIndex)
-        print(playerName .. ': current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
-        showText(playerName .. ': current timer paused because of timer with next color ' .. colorNext .. ' is not exists')
+        local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
+        print(playerName .. ': current timer paused because of no any timer binded to color ' .. colorNext)
+        showText(playerName .. ': current timer paused because of no any timer binded to color ' .. colorNext)
     end
 end
 
@@ -510,8 +642,9 @@ function onPlayerTurnStart(startColor, prevColor)
     if startIndex ~= nil then
         setCurrentTimer(startIndex)
     else
-        print('Can\'t find timer with color ' .. startColor)
-        showText('Can\'t find timer with color ' .. startColor)
+        local playerName = getPlayerNameByColor(startColor)
+        print('Timer binded to player ' .. playerName .. ' with color ' .. startColor .. ' not found')
+        showText('Timer binded to player ' .. playerName .. ' with color ' .. startColor .. ' not found')
     end
 end
 
@@ -539,11 +672,12 @@ function clone (t) -- deep-copy a table
 end
 
 function createButtons()
+    -- row 1
     self.createButton({
         click_function = 'toggleTimer',
         function_owner = self,
         label          = 'Start',
-        position       = {0.3, 0.5, 0.3},
+        position       = {0.3, 0.5, 0.35},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
@@ -554,38 +688,10 @@ function createButtons()
         tooltip        = 'Start or pause current timer',
     })
     self.createButton({
-        click_function = 'toggleTurns',
-        function_owner = self,
-        label          = 'Turns',
-        position       = {0.3, 0.5, 0},
-        rotation       = {0, 180, 0},
-        -- scale          = -- Vector,
-        width          = 150,
-        height         = 100,
-        font_size      = 40,
-        color          = defaultButtonColor,
-        -- font_color     = -- Color,
-        tooltip        = 'Enable or disable auto-binding to Turns and Colors',
-    })
-    self.createButton({
-        click_function = 'resetTimers',
-        function_owner = self,
-        label          = 'Reset',
-        position       = {0.3, 0.5, -0.3},
-        rotation       = {0, 180, 0},
-        -- scale          = -- Vector,
-        width          = 150,
-        height         = 100,
-        font_size      = 40,
-        color          = defaultButtonColor,
-        -- font_color     = -- Color,
-        tooltip        = 'Reset all timers',
-    })
-    self.createButton({
         click_function = 'decreaseLimit',
         function_owner = self,
         label          = '--',
-        position       = {0, 0.5, 0.3},
+        position       = {0, 0.5, 0.35},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
@@ -599,7 +705,7 @@ function createButtons()
         click_function = 'increaseLimit',
         function_owner = self,
         label          = '++',
-        position       = {-0.3, 0.5, 0.3},
+        position       = {-0.3, 0.5, 0.35},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
@@ -609,11 +715,13 @@ function createButtons()
         -- font_color     = -- Color,
         tooltip        = 'Increase upper limit of all timers at ' .. timerIncrement .. ' seconds',
     })
+
+    -- row 2
     self.createButton({
         click_function = 'decreaseCurrentTime',
         function_owner = self,
         label          = '-',
-        position       = {0, 0.5, 0},
+        position       = {0, 0.5, 0.12},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
@@ -627,7 +735,7 @@ function createButtons()
         click_function = 'increaseCurrentTime',
         function_owner = self,
         label          = '+',
-        position       = {-0.3, 0.5, 0},
+        position       = {-0.3, 0.5, 0.12},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
@@ -637,11 +745,74 @@ function createButtons()
         -- font_color     = -- Color,
         tooltip        = 'Increase current timer at ' .. timerIncrement .. ' seconds',
     })
+
+    -- row 3
+    self.createButton({
+        click_function = 'toggleTurns',
+        function_owner = self,
+        label          = 'Turns',
+        position       = {0.3, 0.5, -0.12},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        color          = defaultButtonColor,
+        -- font_color     = -- Color,
+        tooltip        = 'Enable or disable auto-binding of current timer to Turns and Colors',
+    })
+    self.createButton({
+        click_function = 'selectTimerColor',
+        function_owner = self,
+        label          = 'Select',
+        position       = {0, 0.5, -0.12},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        color          = defaultButtonColor,
+        -- font_color     = -- Color,
+        tooltip        = '\z
+            Select the player to which you want to bind a current timer. \z
+            To reset selected value disable and reenable turns with button Turn.\z
+        ',
+    })
+    self.createButton({
+        click_function = 'bindTimerToColor',
+        function_owner = self,
+        label          = 'Bind',
+        position       = {-0.3, 0.5, -0.12},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        color          = defaultButtonColor,
+        -- font_color     = -- Color,
+        tooltip        = 'Bind or unbind current timer to selected player',
+    })
+
+    -- row 4
+    self.createButton({
+        click_function = 'resetTimers',
+        function_owner = self,
+        label          = 'Reset',
+        position       = {0.3, 0.5, -0.35},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        color          = defaultButtonColor,
+        -- font_color     = -- Color,
+        tooltip        = 'Reset all timers to ' .. formatSeconds(timerLimit),
+    })
     self.createButton({
         click_function = 'removeTimer',
         function_owner = self,
         label          = 'Remove',
-        position       = {0, 0.5, -0.3},
+        position       = {0, 0.5, -0.35},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
@@ -655,7 +826,7 @@ function createButtons()
         click_function = 'addTimer',
         function_owner = self,
         label          = 'Add',
-        position       = {-0.3, 0.5, -0.3},
+        position       = {-0.3, 0.5, -0.35},
         rotation       = {0, 180, 0},
         -- scale          = -- Vector,
         width          = 150,
