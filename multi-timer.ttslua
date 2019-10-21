@@ -93,7 +93,8 @@ function onLoad(savedState)
     updateSelectTimerColorView()
 
     self.setName('MultiTimer')
-    self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' .. version .. '. \n\n' .. url)
+    self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' ..
+            version .. '. \n\n' .. url)
     self.setColorTint(mainColor)
 end
 
@@ -352,6 +353,9 @@ end
 function removeTimer()
     local length = length(timersList)
     if length > 1 then
+        local removePlayerName = getPlayerNameByTimerIndex(currentTimerIndex)
+        local removeSeconds = formatSeconds(getTimerSecondsHumanReadeable(timersList[currentTimerIndex]))
+
         local newTimersList = {}
         local nextIndex = 0
         for index, timer in pairs(timersList) do
@@ -361,8 +365,10 @@ function removeTimer()
             end
         end
         timersList = newTimersList
-        print('Timer removed. Timers count: ' .. nextIndex)
-        showText('Timer removed. Timers count: ' .. nextIndex)
+        print(string.format('Timer #%d for player %s with value %s removed. Timers count: %d.', currentTimerIndex,
+            removePlayerName, removeSeconds, nextIndex))
+        showText(string.format('Timer #%d for player %s with value %s removed. Timers count: %d.', currentTimerIndex,
+            removePlayerName, removeSeconds, nextIndex))
         if currentTimerIndex == length then
             currentTimerIndex = currentTimerIndex - 2
         else
