@@ -28,7 +28,8 @@ turnsColors = {
     Grey        = {0.5, 0.5, 0.5},
     Black       = {0.25, 0.25, 0.25}
 }
-maxPlayerNameLength = 9
+maxPlayerNameLengthForNextTimer = 9
+maxPlayerNameLengthForSelect = 8
 
 -- variables
 isActive = false
@@ -114,6 +115,9 @@ function updateForBackwardCompatibility()
     if timerIncrement == 30 then
         timerIncrement = 60
     end
+    if getPlayerNameByColor(selectedTimerColor) == nil then
+        selectedTimerColor = nil
+    end
 end
 
 function onUpdate()
@@ -141,8 +145,8 @@ function updateView()
         sign = '-'
     end
     local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
-    if string.len(playerName) > maxPlayerNameLength then
-        playerName = string.sub(playerName, 1, maxPlayerNameLength)
+    if string.len(playerName) > maxPlayerNameLengthForNextTimer then
+        playerName = string.sub(playerName, 1, maxPlayerNameLengthForNextTimer)
     end
     local timerString = playerName .. '\n' .. sign .. formatSeconds(seconds)
     local prevString = self.getButtons()[firstCurrentTimerButtonIndex].label
@@ -445,9 +449,12 @@ function selectTimerColor()
             end
         end
         -- TODO: sort colors according to turnsColors
-        local nextSelectedIndex = indexByColor[selectedTimerColor] + 1
-        if (nextSelectedIndex > lastColorIndex) then
-            nextSelectedIndex = 1
+        local nextSelectedIndex = 1
+        local selectedIndex = indexByColor[selectedTimerColor]
+        if selectedIndex ~= nil then
+            if selectedIndex < lastColorIndex then
+                nextSelectedIndex = selectedIndex + 1
+            end
         end
         nextSelectedColor = colorsByIndex[nextSelectedIndex]
     end
@@ -473,8 +480,8 @@ function updateSelectTimerColorView()
         elseif selectedTimerColor ~= nil then
             local buttonColor = turnsColors[selectedTimerColor]
             local playerName = getPlayerNameByColor(selectedTimerColor)
-            if string.len(playerName) > maxPlayerNameLength then
-                playerName = string.sub(playerName, 1, maxPlayerNameLength)
+            if string.len(playerName) > maxPlayerNameLengthForSelect then
+                playerName = string.sub(playerName, 1, maxPlayerNameLengthForSelect)
             end
             self.editButton({
                 index          = selectTimerColorButtonIndex - 1,
