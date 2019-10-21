@@ -9,11 +9,11 @@ disabledColor = {153/255, 153/255, 153/255}
 defaultButtonColor = {255/255, 255/255, 255/255}
 undefinedTimerColorValue = ''
 startButtonIndex = 0
-turnsButtonIndex = 5
-selectTimerColorButtonIndex = 7
-bindTimerToColorButtonIndex = 8
-resetTimersButtonIndex = 9
-firstCurrentTimerButtonIndex = 12
+turnsButtonIndex = 6
+selectTimerColorButtonIndex = 8
+bindTimerToColorButtonIndex = 9
+resetTimersButtonIndex = 10
+firstCurrentTimerButtonIndex = 13
 turnsColors = {
     White       = {1, 1, 1},
     Brown       = {0.443, 0.231, 0.09},
@@ -418,6 +418,20 @@ function decreaseCurrentTime()
     print('Timer of ' .. playerName .. ' decreased at ' .. formatSeconds(timerIncrement))
 end
 
+function printAllTimerValues()
+    printToAll("[MultiTimer values at " .. os.date('%Y-%m-%d %H:%M:%S') .. ":]", mainColor)
+    for index, timer in pairs(timersList) do
+        local playerName = getPlayerNameByTimerIndex(index)
+        local seconds = formatSeconds(getTimerSecondsHumanReadeable(timer))
+        local currentPlayer = currentTimerIndex == index
+        if currentPlayer then
+            printToAll(string.format("%02d. %s: %s", index, playerName, seconds), turnsColors['Grey'])
+        else
+            printToAll(string.format("%02d. %s: %s", index, playerName, seconds), turnsColors['White'])
+        end
+    end
+end
+
 function selectTimerColor()
     if isTurns == false then
         return
@@ -724,6 +738,20 @@ function createButtons()
     })
 
     -- row 2
+    self.createButton({
+        click_function = 'printAllTimerValues',
+        function_owner = self,
+        label          = 'Print',
+        position       = {0.3, 0.5, 0.12},
+        rotation       = {0, 180, 0},
+        -- scale          = -- Vector,
+        width          = 150,
+        height         = 100,
+        font_size      = 40,
+        color          = defaultButtonColor,
+        -- font_color     = -- Color,
+        tooltip        = 'Print values of all timers to game chat',
+    })
     self.createButton({
         click_function = 'decreaseCurrentTime',
         function_owner = self,
