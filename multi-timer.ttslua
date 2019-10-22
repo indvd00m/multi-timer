@@ -1,7 +1,7 @@
 -- MultiTimer - chessclock-like timer for two or more players
 
 -- constants
-version = '1.3.0-dev'
+version = '1.3.0'
 url = 'https://github.com/indvd00m/multi-timer'
 mainColor = {102/255, 102/255, 255/255}
 enabledColor = {0/255, 204/255, 102/255}
@@ -112,7 +112,7 @@ function updateForBackwardCompatibility()
         timerTemplate['color'] = undefinedTimerColorValue
     end
 
-    -- 1.3.0-dev changes
+    -- 1.3.0 changes
     if timerIncrement == 30 then
         timerIncrement = 60
     end
