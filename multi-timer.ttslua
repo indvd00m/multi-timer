@@ -63,7 +63,7 @@ function onSave()
 end
 
 function onLoad(savedState)
-    if savedState ~= nil and savedState ~= "" then
+    if savedState ~= nil and savedState ~= '' then
         local persistence = JSON.decode(savedState)
         isActive = persistence.isActive
         isTurns = persistence.isTurns
@@ -192,13 +192,22 @@ function formatSeconds(seconds)
     local hours = math.floor(seconds / (60 * 60))
     local minutes = math.floor(seconds % (60 * 60) / 60)
     seconds = seconds % 60
-    return string.format("%02d:%02d:%02d", hours, minutes, seconds)
+    return string.format('%02d:%02d:%02d', hours, minutes, seconds)
 end
 
 function showText(text)
     if isTurns then
         broadcastToAll(text, mainColor)
+    else
+        chatText(text, mainColor)
     end
+end
+
+function chatText(text, color)
+    if color == nil then
+        color = mainColor
+    end
+    printToAll(text, color)
 end
 
 function toggleTimer()
@@ -215,7 +224,6 @@ function startTimer()
         isActive = true
         updateView()
         updateActiveView()
-        print('Timer started')
         showText('Timer started')
     end
 end
@@ -225,8 +233,7 @@ function pauseTimer()
         isActive = false
         updateView()
         updateActiveView()
-        print('Timers paused')
-        showText('Timers paused')
+        showText('Timer paused')
     end
 end
 
@@ -260,25 +267,24 @@ function enableTurns()
         updateTurnsView()
         updateCurrentTurnView()
         updateSelectTimerColorView()
-        print('\z
+        showText('Turns and Colors enabled. See chat for more information.')
+        chatText('\z
             Turns and colors binding enabled. For binding timer to any player first select timer, \z
             then repeatedly press button Select to select player and then press button Bind to bind \z
             current timer to selected player. Now timer will be automatically changed when turn is \z
             changed. You can change current timer manually also. \z
-        ')
-        showText('Turns and Colors enabled. See chat for more information.')
+        ', turnsColors['White'])
     end
 end
 
 function disableTurns()
     if isTurns == true then
-        showText('Turns disabled')
         isTurns = false
         selectedTimerColor = nil
         updateTurnsView()
         updateCurrentTurnView()
         updateSelectTimerColorView()
-        print('Turns disabled')
+        showText('Turns disabled')
     end
 end
 
@@ -297,16 +303,16 @@ function updateTurnsView()
 end
 
 function resetTimers()
+    showText('Reseting all timers')
     for index, timer in pairs(timersList) do
         local playerName = getPlayerNameByTimerIndex(index)
         local seconds = getTimerSecondsHumanReadeable(timer)
-        print(playerName .. ': Timer value before reseting: ' .. formatSeconds(seconds))
+        chatText(playerName .. ': timer value before reseting: ' .. formatSeconds(seconds))
         resetTimer(timer)
     end
 
     updateView()
     local seconds = formatSeconds(timerLimit)
-    print('All timers reseted to ' .. seconds)
     showText('All timers reseted to ' .. seconds)
 end
 
@@ -326,7 +332,7 @@ end
 function setCurrentTimer(index)
     local length = length(timersList)
     if index > length or index < 1 then
-        print('Incorrect timer index: ' .. index)
+        log('Incorrect timer index: ' .. index)
         return
     end
     currentTimerIndex = index
@@ -337,7 +343,7 @@ function setCurrentTimer(index)
     updateCurrentTurnView()
     updateSelectTimerColorView()
     local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
-    print('Current timer: ' .. playerName .. ' (' .. currentTimerIndex .. ' from ' .. length .. ')')
+    log('Current timer: ' .. playerName .. ' (' .. currentTimerIndex .. ' from ' .. length .. ')')
     showText('Current timer: ' .. playerName)
 end
 
@@ -345,7 +351,6 @@ function addTimer()
     local nextIndex = length(timersList) + 1
     local newTimer = clone(timerTemplate);
     timersList[nextIndex] = newTimer
-    print('Timer added. Timers count: ' .. nextIndex)
     showText('Timer added. Timers count: ' .. nextIndex)
     setCurrentTimer(nextIndex)
 end
@@ -365,8 +370,6 @@ function removeTimer()
             end
         end
         timersList = newTimersList
-        print(string.format('Timer #%d for player %s with value %s removed. Timers count: %d.', currentTimerIndex,
-            removePlayerName, removeSeconds, nextIndex))
         showText(string.format('Timer #%d for player %s with value %s removed. Timers count: %d.', currentTimerIndex,
             removePlayerName, removeSeconds, nextIndex))
         if currentTimerIndex == length then
@@ -376,23 +379,22 @@ function removeTimer()
         end
         nextTimer()
     else
-        print('Removing of last timer is deprecated')
         showText('Removing of last timer is deprecated')
     end
 end
 
 function increaseLimit()
     timerLimit = timerLimit + timerIncrement
-    print('All timers increased at ' .. formatSeconds(timerIncrement))
+    chatText('All timers increased at ' .. formatSeconds(timerIncrement))
     updateResetTimerView()
 end
 
 function decreaseLimit()
     if timerLimit > timerIncrement then
         timerLimit = timerLimit - timerIncrement
-        print('All timers decreased at ' .. formatSeconds(timerIncrement))
+        chatText('All timers decreased at ' .. formatSeconds(timerIncrement))
     else
-        print('Timers already decreased until the end ')
+        chatText('Timers already decreased until the end')
     end
     updateResetTimerView()
 end
@@ -410,10 +412,10 @@ function increaseCurrentTime()
     local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     if timer.currentSeconds > timerIncrement then
         timer.currentSeconds = timer.currentSeconds - timerIncrement
-        print('Timer of ' .. playerName .. ' increased at ' .. formatSeconds(timerIncrement))
+        chatText('Timer of ' .. playerName .. ' increased at ' .. formatSeconds(timerIncrement))
     else
         timer.currentSeconds = 0
-        print('Timer of ' .. playerName .. ' already increased to maximum')
+        chatText('Timer of ' .. playerName .. ' already increased to maximum')
     end
 end
 
@@ -421,19 +423,19 @@ function decreaseCurrentTime()
     local timer = timersList[currentTimerIndex]
     local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     timer.currentSeconds = timer.currentSeconds + timerIncrement
-    print('Timer of ' .. playerName .. ' decreased at ' .. formatSeconds(timerIncrement))
+    chatText('Timer of ' .. playerName .. ' decreased at ' .. formatSeconds(timerIncrement))
 end
 
 function printAllTimerValues()
-    printToAll("[MultiTimer values at " .. os.date('%Y-%m-%d %H:%M:%S') .. ":]", mainColor)
+    chatText('[MultiTimer values at ' .. os.date('%Y-%m-%d %H:%M:%S') .. ':]', mainColor)
     for index, timer in pairs(timersList) do
         local playerName = getPlayerNameByTimerIndex(index)
         local seconds = formatSeconds(getTimerSecondsHumanReadeable(timer))
         local currentPlayer = currentTimerIndex == index
         if currentPlayer then
-            printToAll(string.format("%02d. %s: %s", index, playerName, seconds), turnsColors['Grey'])
+            chatText(string.format('%02d. %s: %s', index, playerName, seconds), turnsColors['Grey'])
         else
-            printToAll(string.format("%02d. %s: %s", index, playerName, seconds), turnsColors['White'])
+            chatText(string.format('%02d. %s: %s', index, playerName, seconds), turnsColors['White'])
         end
     end
 end
@@ -500,6 +502,9 @@ function updateSelectTimerColorView()
         elseif selectedTimerColor ~= nil then
             local buttonColor = turnsColors[selectedTimerColor]
             local playerName = getPlayerNameByColor(selectedTimerColor)
+            if playerName == nil then
+                playerName = '???'
+            end
             if string.len(playerName) > maxPlayerNameLengthForSelect then
                 playerName = string.sub(playerName, 1, maxPlayerNameLengthForSelect)
             end
@@ -550,7 +555,6 @@ function bindTimerToColor()
     if selectedTimerColor == undefinedTimerColorValue then
         timersList[currentTimerIndex].color = undefinedTimerColorValue
         local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
-        print(playerName .. ': timer unbinded')
         showText(playerName .. ': timer unbinded')
     else
         for index, timer in pairs(timersList) do
@@ -558,14 +562,12 @@ function bindTimerToColor()
                 if timer.color == selectedTimerColor then
                     timer.color = undefinedTimerColorValue
                     local playerName = getPlayerNameByTimerIndex(index)
-                    print(playerName .. ': timer unbinded')
                     showText(playerName .. ': timer unbinded')
                 end
             end
         end
         timersList[currentTimerIndex].color = selectedTimerColor
         local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
-        print(playerName .. ' (' .. selectedTimerColor .. '): timer ' .. currentTimerIndex .. ' binded ')
         showText(playerName .. ' (' .. selectedTimerColor .. '): timer ' .. currentTimerIndex .. ' binded ')
     end
 
@@ -636,8 +638,11 @@ function onPlayerTurnEnd(colorEnd, colorNext)
     if needStop then
         pauseTimer()
         local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
-        print(playerName .. ': current timer paused because of no any timer binded to color ' .. colorNext)
-        showText(playerName .. ': current timer paused because of no any timer binded to color ' .. colorNext)
+        if colorNext == nil then
+            showText(playerName .. ': current timer paused because of no any timer binded to color [None]')
+        else
+            showText(playerName .. ': current timer paused because of no any timer binded to color ' .. colorNext)
+        end
     end
 end
 
@@ -670,8 +675,7 @@ function onPlayerTurnStart(startColor, prevColor)
         setCurrentTimer(startIndex)
     else
         local playerName = getPlayerNameByColor(startColor)
-        print('Timer binded to player ' .. playerName .. ' with color ' .. startColor .. ' not found')
-        showText('Timer binded to player ' .. playerName .. ' with color ' .. startColor .. ' not found')
+        showText('Timer binded to player with color ' .. startColor .. ' not found')
     end
 end
 
@@ -684,11 +688,11 @@ function length(table)
 end
 
 function clone (t) -- deep-copy a table
-    if type(t) ~= "table" then return t end
+    if type(t) ~= 'table' then return t end
     local meta = getmetatable(t)
     local target = {}
     for k, v in pairs(t) do
-        if type(v) == "table" then
+        if type(v) == 'table' then
             target[k] = clone(v)
         else
             target[k] = v
