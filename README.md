@@ -10,9 +10,7 @@ Subscribe to MultiTimer at Steam Workshop:
 
 https://steamcommunity.com/sharedfiles/filedetails/?id=1163919316
 
-Load Tabletop Simulator, select Workshop section and load MultiTimer. 
-Click on MultiTimer with right button and select "Save object". Load any other 
-game and move MultiTimer to table from "Saved objects" panel.
+Start Tabletop Simulator and load any game. Select Game -> Workshop -> Multitimer, press the icon on the top-right corner of it and choose "Additive load".
 
 ## Issue tracking
 

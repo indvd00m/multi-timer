@@ -93,7 +93,7 @@ function onLoad(savedState)
     updateSelectTimerColorView()
 
     self.setName('MultiTimer')
-    self.setDescription('MultiTimer is a chessclock-like timer for two or more players. Version ' ..
+    self.setDescription('MultiTimer is a chessclock-like timer for one, two or more players. Version ' ..
             version .. '. \n\n' .. url)
     self.setColorTint(mainColor)
 end
