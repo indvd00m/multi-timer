@@ -180,6 +180,9 @@ function getPlayerNameByTimerIndex(timerIndex)
 end
 
 function getPlayerNameByColor(color)
+    if color == nil then
+        return nil
+    end
     local player = Player[color]
     if player ~= nil and player.steam_name ~= nil then
         return player.steam_name
