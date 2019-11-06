@@ -140,16 +140,11 @@ end
 
 function updateView()
     local seconds = getTimerSecondsHumanReadeable(timersList[currentTimerIndex])
-    local sign = ''
-    if seconds < 0 then
-        seconds = math.abs(seconds)
-        sign = '-'
-    end
     local playerName = getPlayerNameByTimerIndex(currentTimerIndex)
     if string.len(playerName) > maxPlayerNameLengthForNextTimer then
         playerName = string.sub(playerName, 1, maxPlayerNameLengthForNextTimer)
     end
-    local timerString = playerName .. '\n' .. sign .. formatSeconds(seconds)
+    local timerString = playerName .. '\n' .. formatSeconds(seconds)
     local prevString = self.getButtons()[firstCurrentTimerButtonIndex].label
     if timerString ~= prevString then
         for i = 0, 3 do
@@ -192,10 +187,15 @@ function getPlayerNameByColor(color)
 end
 
 function formatSeconds(seconds)
+    local sign = ''
+    if seconds < 0 then
+        seconds = math.abs(seconds)
+        sign = '-'
+    end
     local hours = math.floor(seconds / (60 * 60))
     local minutes = math.floor(seconds % (60 * 60) / 60)
     seconds = seconds % 60
-    return string.format('%02d:%02d:%02d', hours, minutes, seconds)
+    return string.format('%s%02d:%02d:%02d', sign, hours, minutes, seconds)
 end
 
 function showText(text)
@@ -434,12 +434,12 @@ function printAllTimerValues()
     for index, timer in pairs(timersList) do
         local playerName = getPlayerNameByTimerIndex(index)
         local seconds = formatSeconds(getTimerSecondsHumanReadeable(timer))
+        local color = 'White'
         local currentPlayer = currentTimerIndex == index
         if currentPlayer then
-            chatText(string.format('%02d. %s: %s', index, playerName, seconds), turnsColors['Grey'])
-        else
-            chatText(string.format('%02d. %s: %s', index, playerName, seconds), turnsColors['White'])
+            color = 'Grey'
         end
+        chatText(string.format('%02d. %s: %s', index, playerName, seconds), turnsColors[color])
     end
 end
 
