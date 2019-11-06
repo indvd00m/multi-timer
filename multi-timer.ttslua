@@ -439,7 +439,7 @@ function printAllTimerValues()
         if currentPlayer then
             color = 'Grey'
         end
-        chatText(string.format('%02d. %s: %s', index, playerName, seconds), turnsColors[color])
+        chatText(string.format('%02d. %s - %s', index, seconds, playerName), turnsColors[color])
     end
 end
 
