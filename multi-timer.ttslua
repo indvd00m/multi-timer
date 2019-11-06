@@ -272,10 +272,10 @@ function enableTurns()
         updateSelectTimerColorView()
         showText('Turns and Colors enabled. See chat for more information.')
         chatText('\z
-            Turns and colors binding enabled. For binding timer to any player first select timer, \z
-            then repeatedly press button Select to select player and then press button Bind to bind \z
-            current timer to selected player. Now timer will be automatically changed when turn is \z
-            changed. You can change current timer manually also. \z
+            Turns and colors binding enabled. For binding timer to any Player Color first select timer, \z
+            then repeatedly press button Select to select Player Color and then press button Bind to bind \z
+            current timer to selected Player Color. Now timer will be automatically changed when turn (color) \z
+            is changed. You can change current timer manually also. \z
         ', turnsColors['White'])
     end
 end
@@ -822,7 +822,7 @@ function createButtons()
         color          = defaultButtonColor,
         -- font_color     = -- Color,
         tooltip        = '\z
-            Select the player to which you want to bind a current timer. \z
+            Select the Player Color to which you want to bind a current timer. \z
             To reset selected value disable and reenable turns with button Turn.\z
         ',
     })
@@ -838,7 +838,7 @@ function createButtons()
         font_size      = 40,
         color          = defaultButtonColor,
         -- font_color     = -- Color,
-        tooltip        = 'Bind or unbind current timer to selected player',
+        tooltip        = 'Bind or unbind current timer to selected Player Color',
     })
 
     -- row 4
