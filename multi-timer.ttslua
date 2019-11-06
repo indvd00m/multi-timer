@@ -1,4 +1,4 @@
--- MultiTimer - chessclock-like timer for two or more players
+-- MultiTimer - chessclock-like timer for one, two or more players
 
 -- constants
 version = '1.4.0-dev'
